@@ -1,0 +1,10 @@
+{
+  "allowlist": [
+    { "pattern": "מגזין" },
+    { "pattern": "מגזינים" },
+    { "pattern": "זינוק" },
+    { "pattern": "זינוקים" },
+    { "pattern": "ארגזים" },
+    { "pattern": "ארגז" }
+  ]
+}

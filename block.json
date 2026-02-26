@@ -42,6 +42,9 @@
     { "category": "curses",     "pattern": "damn",                     "replacement": "da**" },
     { "category": "curses",     "pattern": "hell",                     "replacement": "he**" },
     { "category": "curses",     "pattern": "cock",                     "replacement": "co**" },
+    { "category": "curses",     "pattern": "sex",                     "replacement": "se*" },
+    { "category": "curses",     "pattern": "WTF",                     "replacement": "W*F" },
+
 
     { "category": "curses",     "pattern": "זונה",                    "replacement": "זו**" },
     { "category": "curses",     "pattern": "שרמוטה",                  "replacement": "שר****" },
@@ -55,7 +58,6 @@
     { "category": "curses",     "pattern": "להזדיין",                 "replacement": "להז****" },
     { "category": "curses",     "pattern": "מזדיין",                  "replacement": "מז****" },
     { "category": "curses",     "pattern": "דפוק",                    "replacement": "ד***" },
-    { "category": "curses",     "pattern": "זבל",                     "replacement": "ז**" },
     { "category": "curses",     "pattern": "הומו",                    "replacement": "ה***" },
     { "category": "curses",     "pattern": "קוקסינל",                 "replacement": "קו******" },
     { "category": "curses",     "pattern": "מפגר",                    "replacement": "מפ**" },
@@ -71,7 +73,11 @@
     { "category": "curses",     "pattern": "מניאקית",                 "replacement": "מנ*****" },
     { "category": "curses",     "pattern": "זין",                      "replacement": "ז**" },
     { "category": "curses",     "pattern": "מניוק",                   "replacement": "מנ***" },
-    { "category": "curses",     "pattern": "זיינתי",                  "replacement": "זי****" },
-    { "category": "curses",     "pattern": "זונתי",                   "replacement": "זו***" }
+    { "category": "curses",     "pattern": "זיינ",                  "replacement": "זי****" },
+    { "category": "curses",     "pattern": "זונתי",                   "replacement": "זו***" },
+    { "category": "curses",     "pattern": "תזדיין",                   "replacement": "תז****" },
+    { "category": "curses",     "pattern": "קיבינימט",                   "replacement": "קיב*****" },
+    { "category": "curses",     "pattern": "לעזאזל",                   "replacement": "לעזא**" },
+    { "category": "curses",     "pattern": "סקס",                   "replacement": "סק*" }
   ]
 }

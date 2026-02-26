@@ -1,6 +1,10 @@
 let REPLACEMENTS = [];
+let ALLOWLIST = [];
 
-// שמירת הטקסט המקורי של כל צומת
+// placeholder ייחודי שלא יתנגש עם תוכן אמיתי
+const PLACEHOLDER_PREFIX = "\x00ALLOW_";
+const PLACEHOLDER_SUFFIX = "\x00";
+
 const originalText = new WeakMap();
 
 function loadReplacements() {
@@ -8,27 +12,56 @@ function loadReplacements() {
     chrome.runtime.sendMessage({ type: "GET_REPLACEMENTS" }, (response) => {
       if (response?.ok) {
         REPLACEMENTS = response.replacements.map(({ pattern, replacement, flags }) => {
-          // תמיד ליצור RegExp כדי לתמוך ב-\b
           const compiled = new RegExp(pattern, flags);
           return [compiled, replacement];
         });
+        ALLOWLIST = response.allowlist || [];
       }
       resolve();
     });
   });
 }
 
+function applyWithAllowlist(text) {
+  if (ALLOWLIST.length === 0) {
+    // אין allowlist, פשוט תחליף
+    for (const [pattern, replacement] of REPLACEMENTS) {
+      text = text.replaceAll(pattern, replacement);
+    }
+    return text;
+  }
+
+  // שלב 1: החלף מילים ב-allowlist ב-placeholder זמני
+  const placeholderMap = {};
+  ALLOWLIST.forEach((word, i) => {
+    const placeholder = `${PLACEHOLDER_PREFIX}${i}${PLACEHOLDER_SUFFIX}`;
+    // החלפה case-insensitive
+    const regex = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+    text = text.replace(regex, (match) => {
+      placeholderMap[placeholder] = match; // שמור את המקרה המקורי
+      return placeholder;
+    });
+  });
+
+  // שלב 2: הפעל את כל ה-block replacements
+  for (const [pattern, replacement] of REPLACEMENTS) {
+    text = text.replaceAll(pattern, replacement);
+  }
+
+  // שלב 3: החזר את מילות ה-allowlist המקוריות
+  for (const [placeholder, original] of Object.entries(placeholderMap)) {
+    text = text.replaceAll(placeholder, original);
+  }
+
+  return text;
+}
+
 function replaceInTextNode(node) {
-  // שמור את הטקסט המקורי אם עוד לא נשמר
   if (!originalText.has(node)) {
     originalText.set(node, node.textContent);
   }
 
-  // התחל תמיד מהמקורי
-  let text = originalText.get(node);
-  for (const [pattern, replacement] of REPLACEMENTS) {
-    text = text.replaceAll(pattern, replacement);
-  }
+  const text = applyWithAllowlist(originalText.get(node));
   if (node.textContent !== text) {
     node.textContent = text;
   }
@@ -82,7 +115,6 @@ function startObserver() {
       if (mutation.type === "characterData") {
         const node = mutation.target;
         if (!isInteractive(node)) {
-          // טקסט השתנה מבחוץ — עדכן את המקורי
           originalText.set(node, node.textContent);
           replaceInTextNode(node);
         }
@@ -105,7 +137,6 @@ function startObserver() {
   });
 }
 
-// האזנה לעדכון קטגוריות מה-popup
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === "CATEGORIES_UPDATED") {
     loadReplacements().then(() => walkDOM(document.body));
