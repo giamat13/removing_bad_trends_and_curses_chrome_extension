@@ -1,11 +1,36 @@
-// מחליף את המספר הגרוע (66+1) ב-6* בכל טקסט בדף
-// גם כשהוא חלק ממספר גדול יותר
+// טוען את רשימת החסימות מ-background.js (שקורא מ-block.json)
 
-const BAD_NUMBER = String(66 + 1);
-const REPLACEMENT = "6*";
+let REPLACEMENTS = [];
+
+function loadReplacements() {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: "GET_REPLACEMENTS" }, (response) => {
+      if (response?.ok) {
+        REPLACEMENTS = response.replacements.map(({ pattern, replacement, flags }) => {
+          const compiled = flags ? new RegExp(pattern, flags) : pattern;
+          return [compiled, replacement];
+        });
+      }
+      resolve();
+    });
+  });
+}
 
 function replaceInTextNode(node) {
-  node.textContent = node.textContent.replaceAll(BAD_NUMBER, REPLACEMENT);
+  let text = node.textContent;
+  for (const [pattern, replacement] of REPLACEMENTS) {
+    text = text.replaceAll(pattern, replacement);
+  }
+  if (text !== node.textContent) {
+    node.textContent = text;
+  }
+}
+
+function nodeHasMatch(node) {
+  const t = node.textContent;
+  return REPLACEMENTS.some(([p]) =>
+    typeof p === "string" ? t.includes(p) : p.test(t)
+  );
 }
 
 function walkDOM(root) {
@@ -14,46 +39,58 @@ function walkDOM(root) {
     NodeFilter.SHOW_TEXT,
     {
       acceptNode(node) {
-        // מדלג על תגיות script ו-style
         const parent = node.parentElement;
         if (!parent) return NodeFilter.FILTER_REJECT;
         const tag = parent.tagName;
         if (tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT") {
           return NodeFilter.FILTER_REJECT;
         }
-        // רק צמתים שמכילים את המספר
-        if (node.textContent.includes(BAD_NUMBER)) {
-          return NodeFilter.FILTER_ACCEPT;
+        if (
+          tag === "INPUT" ||
+          tag === "TEXTAREA" ||
+          parent.isContentEditable ||
+          parent.closest("[contenteditable]")
+        ) {
+          return NodeFilter.FILTER_REJECT;
         }
-        return NodeFilter.FILTER_SKIP;
+        return nodeHasMatch(node)
+          ? NodeFilter.FILTER_ACCEPT
+          : NodeFilter.FILTER_SKIP;
       }
     }
   );
 
   const nodes = [];
-  while (walker.nextNode()) {
-    nodes.push(walker.currentNode);
-  }
+  while (walker.nextNode()) nodes.push(walker.currentNode);
   nodes.forEach(replaceInTextNode);
 }
 
-// הפעל על הדף הנוכחי
-walkDOM(document.body);
-
-// עקוב אחרי שינויים דינמיים (SPA, תוכן שנטען אחרי)
-const observer = new MutationObserver((mutations) => {
-  for (const mutation of mutations) {
-    for (const node of mutation.addedNodes) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        replaceInTextNode(node);
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        walkDOM(node);
+function startObserver() {
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const parent = node.parentElement;
+          if (!parent) continue;
+          const tag = parent.tagName;
+          if (
+            tag === "INPUT" || tag === "TEXTAREA" ||
+            parent.isContentEditable ||
+            parent.closest("[contenteditable]")
+          ) continue;
+          replaceInTextNode(node);
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          walkDOM(node);
+        }
       }
     }
-  }
-});
+  });
 
-observer.observe(document.body, {
-  childList: true,
-  subtree: true
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// הפעלה ראשית
+loadReplacements().then(() => {
+  walkDOM(document.body);
+  startObserver();
 });

@@ -1,13 +1,20 @@
 {
   "manifest_version": 3,
-  "name": "מחליף המספר הגרוע",
+  "name": "מסיר טרנדים גרועים",
   "version": "1.0",
-  "description": "מחליף את המספר הגרוע בכל דף",
+  "description": "מסיר טרנדים גרועים",
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
       "run_at": "document_end"
     }
-  ]
+  ],
+  "web_accessible_resources": [{
+    "resources": ["block.json"],
+    "matches": ["<all_urls>"]
+  }]
 }
