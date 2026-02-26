@@ -11,11 +11,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const replacements = data.replacements
         .filter(({ category }) => {
           const cat = category || "general";
-          return blockedCategories[cat] !== false; // ברירת מחדל: מופעל
+          return blockedCategories[cat] !== false;
         })
         .map(({ pattern, replacement, regex }) => {
-          const flags = regex ? "g" : isLatin(pattern) ? "gi" : "g";
-          return { pattern, replacement, flags };
+          let finalPattern = pattern;
+          let flags = "g";
+
+          // אם זו מילה באנגלית ולא הגדרת regex ידנית
+          if (!regex && isLatin(pattern)) {
+            // הוספת \b מבטיחה שזה יחפש רק מילה שלמה (לא חלק מ-click)
+            finalPattern = `\\b${pattern}\\b`;
+            flags = "gi"; // i עבור אי-רגישות לאותיות גדולות/קטנות
+          } else if (regex) {
+            flags = "gi";
+          }
+
+          return { pattern: finalPattern, replacement, flags, isRegex: true };
         });
       sendResponse({ ok: true, replacements });
     }).catch(err => sendResponse({ ok: false, error: err.message }));

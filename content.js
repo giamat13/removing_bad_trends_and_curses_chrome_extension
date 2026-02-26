@@ -8,7 +8,8 @@ function loadReplacements() {
     chrome.runtime.sendMessage({ type: "GET_REPLACEMENTS" }, (response) => {
       if (response?.ok) {
         REPLACEMENTS = response.replacements.map(({ pattern, replacement, flags }) => {
-          const compiled = flags ? new RegExp(pattern, flags) : pattern;
+          // תמיד ליצור RegExp כדי לתמוך ב-\b
+          const compiled = new RegExp(pattern, flags);
           return [compiled, replacement];
         });
       }
