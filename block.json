@@ -1,15 +1,27 @@
 {
   "replacements": [
-    { "pattern": "67",      "replacement": "6*" },
-    { "pattern": "sigma",   "replacement": "si***" },
-    { "pattern": "rizz",    "replacement": "ri**" },
-    { "pattern": "gyat",    "replacement": "g***" },
-    { "pattern": "skibidi", "replacement": "sk*****" },
-    { "pattern": "ohio",    "replacement": "Oh**" },
-    { "pattern": "סיגמה",  "replacement": "סי***" },
-    { "pattern": "ריז",    "replacement": "רי*" },
-    { "pattern": "גיאט",   "replacement": "ג***" },
-    { "pattern": "סקיבידי","replacement": "סק*****" },
-    { "pattern": "אוהיו",  "replacement": "או***" }
+    { "pattern": "67",                   "replacement": "6*" },
+    { "pattern": "brainrot",             "replacement": "ריקבון מוח איטלקי" },
+    { "pattern": "brain rot",            "replacement": "ריקבון מוח איטלקי" },
+    { "pattern": "sigma",                "replacement": "si***" },
+    { "pattern": "rizz",                 "replacement": "ri**" },
+    { "pattern": "gyat",                 "replacement": "g***" },
+    { "pattern": "skibidi",              "replacement": "sk*****" },
+    { "pattern": "ohio",                 "replacement": "Oh**" },
+    { "pattern": "tralalero tralala",    "replacement": "tr******* tr*****" },
+    { "pattern": "bombardiro crocodilo", "replacement": "bo********* cr*******" },
+    { "pattern": "tung tung tung sahur", "replacement": "tu** tu** tu** sa***" },
+    { "pattern": "ballerina cappuccina", "replacement": "ba******* ca********" },
+    { "pattern": "cappuccino assassino", "replacement": "ca******** as*******" },
+    { "pattern": "br br patapim",        "replacement": "b* b* pa*****" },
+    { "pattern": "tripi tropi",          "replacement": "tr*** tr***" },
+    { "pattern": "chimpanzini bananini", "replacement": "ch******** ba******" },
+    { "pattern": "lirili larila",        "replacement": "li**** la****" },
+    { "pattern": "glorbo fruttodrillo",  "replacement": "gl**** fr**********" },
+    { "pattern": "סיגמה",              "replacement": "סי***" },
+    { "pattern": "(?<![א-ת])ריז(?![א-ת])", "replacement": "רי*", "regex": true },
+    { "pattern": "גיאט",               "replacement": "ג***" },
+    { "pattern": "סקיבידי",            "replacement": "סק*****" },
+    { "pattern": "אוהיו",              "replacement": "או***" }
   ]
 }

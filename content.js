@@ -1,5 +1,3 @@
-// טוען את רשימת החסימות מ-background.js (שקורא מ-block.json)
-
 let REPLACEMENTS = [];
 
 function loadReplacements() {
@@ -33,6 +31,18 @@ function nodeHasMatch(node) {
   );
 }
 
+function isInteractive(node) {
+  const parent = node.parentElement;
+  if (!parent) return true;
+  const tag = parent.tagName;
+  return (
+    tag === "INPUT" ||
+    tag === "TEXTAREA" ||
+    parent.isContentEditable ||
+    !!parent.closest("[contenteditable]")
+  );
+}
+
 function walkDOM(root) {
   const walker = document.createTreeWalker(
     root,
@@ -45,14 +55,7 @@ function walkDOM(root) {
         if (tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT") {
           return NodeFilter.FILTER_REJECT;
         }
-        if (
-          tag === "INPUT" ||
-          tag === "TEXTAREA" ||
-          parent.isContentEditable ||
-          parent.closest("[contenteditable]")
-        ) {
-          return NodeFilter.FILTER_REJECT;
-        }
+        if (isInteractive(node)) return NodeFilter.FILTER_REJECT;
         return nodeHasMatch(node)
           ? NodeFilter.FILTER_ACCEPT
           : NodeFilter.FILTER_SKIP;
@@ -68,17 +71,18 @@ function walkDOM(root) {
 function startObserver() {
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
+      // טקסט שהשתנה בצומת קיים (למשל streaming של צ'אט)
+      if (mutation.type === "characterData") {
+        const node = mutation.target;
+        if (!isInteractive(node) && nodeHasMatch(node)) {
+          replaceInTextNode(node);
+        }
+        continue;
+      }
+      // צמתים חדשים שנוספו
       for (const node of mutation.addedNodes) {
         if (node.nodeType === Node.TEXT_NODE) {
-          const parent = node.parentElement;
-          if (!parent) continue;
-          const tag = parent.tagName;
-          if (
-            tag === "INPUT" || tag === "TEXTAREA" ||
-            parent.isContentEditable ||
-            parent.closest("[contenteditable]")
-          ) continue;
-          replaceInTextNode(node);
+          if (!isInteractive(node)) replaceInTextNode(node);
         } else if (node.nodeType === Node.ELEMENT_NODE) {
           walkDOM(node);
         }
@@ -86,10 +90,13 @@ function startObserver() {
     }
   });
 
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true  // מזהה שינוי בתוכן טקסט קיים
+  });
 }
 
-// הפעלה ראשית
 loadReplacements().then(() => {
   walkDOM(document.body);
   startObserver();
