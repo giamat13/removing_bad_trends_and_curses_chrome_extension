@@ -1,5 +1,8 @@
 let REPLACEMENTS = [];
 
+// שמירת הטקסט המקורי של כל צומת
+const originalText = new WeakMap();
+
 function loadReplacements() {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage({ type: "GET_REPLACEMENTS" }, (response) => {
@@ -15,17 +18,23 @@ function loadReplacements() {
 }
 
 function replaceInTextNode(node) {
-  let text = node.textContent;
+  // שמור את הטקסט המקורי אם עוד לא נשמר
+  if (!originalText.has(node)) {
+    originalText.set(node, node.textContent);
+  }
+
+  // התחל תמיד מהמקורי
+  let text = originalText.get(node);
   for (const [pattern, replacement] of REPLACEMENTS) {
     text = text.replaceAll(pattern, replacement);
   }
-  if (text !== node.textContent) {
+  if (node.textContent !== text) {
     node.textContent = text;
   }
 }
 
 function nodeHasMatch(node) {
-  const t = node.textContent;
+  const t = originalText.get(node) ?? node.textContent;
   return REPLACEMENTS.some(([p]) =>
     typeof p === "string" ? t.includes(p) : p.test(t)
   );
@@ -56,9 +65,7 @@ function walkDOM(root) {
           return NodeFilter.FILTER_REJECT;
         }
         if (isInteractive(node)) return NodeFilter.FILTER_REJECT;
-        return nodeHasMatch(node)
-          ? NodeFilter.FILTER_ACCEPT
-          : NodeFilter.FILTER_SKIP;
+        return NodeFilter.FILTER_ACCEPT;
       }
     }
   );
@@ -71,15 +78,15 @@ function walkDOM(root) {
 function startObserver() {
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
-      // טקסט שהשתנה בצומת קיים (למשל streaming של צ'אט)
       if (mutation.type === "characterData") {
         const node = mutation.target;
-        if (!isInteractive(node) && nodeHasMatch(node)) {
+        if (!isInteractive(node)) {
+          // טקסט השתנה מבחוץ — עדכן את המקורי
+          originalText.set(node, node.textContent);
           replaceInTextNode(node);
         }
         continue;
       }
-      // צמתים חדשים שנוספו
       for (const node of mutation.addedNodes) {
         if (node.nodeType === Node.TEXT_NODE) {
           if (!isInteractive(node)) replaceInTextNode(node);
@@ -93,9 +100,16 @@ function startObserver() {
   observer.observe(document.body, {
     childList: true,
     subtree: true,
-    characterData: true  // מזהה שינוי בתוכן טקסט קיים
+    characterData: true
   });
 }
+
+// האזנה לעדכון קטגוריות מה-popup
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.type === "CATEGORIES_UPDATED") {
+    loadReplacements().then(() => walkDOM(document.body));
+  }
+});
 
 loadReplacements().then(() => {
   walkDOM(document.body);

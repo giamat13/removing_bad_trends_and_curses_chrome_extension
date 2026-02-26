@@ -1,10 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "מסיר טרנדים גרועים",
-  "version": "1.0",
-  "description": "מסיר טרנדים גרועים",
+  "name": "מסיר טרנדים גרועים וקללות",
+  "version": "1.1.0",
+  "description": "מצנזר את כל הטרנדים והקללות מהדפדפן, ניתן להגדרה",
   "background": {
     "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
   },
   "content_scripts": [
     {
@@ -13,6 +16,7 @@
       "run_at": "document_end"
     }
   ],
+  "permissions": ["storage", "tabs"],
   "web_accessible_resources": [{
     "resources": ["block.json"],
     "matches": ["<all_urls>"]
